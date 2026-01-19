@@ -1,0 +1,37 @@
+<div class="two-column">
+    <div class="card">
+        <h2>Expenses</h2>
+        <ul>
+            {% for e in expenses %}
+            <li>
+                {{ e.date.strftime("%Y-%m-%d") }} —
+                {{ e.category }} —
+                ${{ "%.2f"|format(e.amount) }}
+                <form method="POST"
+                      action="{{ url_for('delete_transaction', id=e.id, txn_type='expense') }}"
+                      style="display:inline;">
+                    <button>Delete</button>
+                </form>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <div class="card">
+        <h2>Income</h2>
+        <ul>
+            {% for i in incomes %}
+            <li>
+                {{ i.date.strftime("%Y-%m-%d") }} —
+                {{ i.category }} —
+                ${{ "%.2f"|format(i.amount) }}
+                <form method="POST"
+                      action="{{ url_for('delete_transaction', id=i.id, txn_type='income') }}"
+                      style="display:inline;">
+                    <button>Delete</button>
+                </form>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="tabs">
+    <div class="tab {% if active_tab == 'dashboard' %}active{% endif %}" onclick="openTab('dashboard')">Dashboard</div>
+    <div class="tab {% if active_tab == 'transactions' %}active{% endif %}" onclick="openTab('transactions')">Transactions</div>
+    <div class="tab {% if active_tab == 'budget' %}active{% endif %}" onclick="openTab('budget')">Budget</div>
+    <div class="tab {% if active_tab == 'user-details' %}active{% endif %}" onclick="openTab('user-details')">User Details</div>
+    <div class="tab {% if active_tab == 'ai' %}active{% endif %}" onclick="openTab('ai')">AI Savings Advisor</div>
+</div>
+
+<div id="dashboard" class="tab-content {% if active_tab == 'dashboard' %}active{% endif %}">
+    {% include "tabs/dashboard.html" %}
+</div>
+
+<div id="transactions" class="tab-content {% if active_tab == 'transactions' %}active{% endif %}">
+    {% include "tabs/transactions.html" %}
+</div>
+
+<div id="budget" class="tab-content {% if active_tab == 'budget' %}active{% endif %}">
+    {% include "tabs/budget.html" %}
+</div>
+    
+<div id="user-details" class="tab-content {% if active_tab == 'user-details' %}active{% endif %}">
+    {% include "tabs/user_details.html" %}
+</div>
+
+<div id="ai" class="tab-content {% if active_tab == 'ai' %}active{% endif %}">
+    {% include "tabs/ai_advisor.html" %}
+</div>
+{% endblock %}

@@ -1,0 +1,102 @@
+<div class="card">
+    <h2>Budget</h2>
+</div>
+
+<div class="card">
+
+    <form method="POST" action="{{ url_for('add_budget') }}" class="budget-form">
+        <select name="budget_category" required>
+            {% for c in expense_categories %}
+            <option value="{{ c.name }}">{{ c.name }}</option>
+            {% endfor %}
+        </select>
+
+        <input type="number" step="0.01" name="budget_limit" placeholder="Budget limit" required>
+        <button type="submit">Save</button>
+    </form>
+
+    {% if budgets %}
+        {% set total_budget = budgets.values()|sum %}
+        {% set total_spent = expense_totals.values()|sum if expense_totals else 0 %}
+        {% set remaining = total_budget - total_spent if total_budget > total_spent else 0 %}
+        {% set over = total_spent - total_budget if total_spent > total_budget else 0 %}
+
+        <div class="budget-charts">
+
+            <!-- Budget Pie -->
+            <div class="chart-left">
+                <canvas id="budgetPieChart"></canvas>
+            </div>
+
+            <!-- Semicircle Gauge -->
+            <div class="chart-right">
+                <canvas id="budgetGaugeChart"></canvas>
+                <div class="gauge-center" id="gaugeCenter">
+                    <div class="gauge-percent" id="gaugePercent">--%</div>
+                    <div class="gauge-dollar" id="gaugeDollar">$0.00</div>
+                    <div class="gauge-label" id="gaugeLabel">Remaining</div>
+                </div>
+            </div>
+
+        </div>
+
+        <p><strong>Total Budget:</strong> ${{ "%.2f"|format(total_budget) }}</p>
+        <p><strong>Total Spent:</strong> ${{ "%.2f"|format(total_spent) }}</p>
+
+        {% if total_spent > total_budget %}
+            <p style="color:#e74c3c;"><strong>Over Budget</strong></p>
+        {% else %}
+            <p style="color:#2ecc71;"><strong>Within Budget</strong></p>
+        {% endif %}
+
+        <!-- SAFE SCRIPT -->
+        <script>
+        // Expose budget data for the main.js initializer. main.js will call initBudgetCharts()
+        window._budget_payload = {
+            labels: {{ budgets.keys() | list | tojson }},
+            values: {{ budgets.values() | list | tojson }},
+            colors: {{ budget_colors | tojson }},
+            total_budget: {{ "%.2f"|format(total_budget) }},
+            total_spent: {{ "%.2f"|format(total_spent) }},
+            remaining: {{ "%.2f"|format(remaining) }},
+            over: {{ "%.2f"|format(over) }}
+        };
+        </script>
+
+        <h3>Budgets</h3>
+        {% if budgets_list %}
+        <table class="card" style="width:100%; border-collapse: collapse;">
+            <thead>
+                <tr style="text-align:left; border-bottom:1px solid #ddd;"><th>Category</th><th>Limit</th><th></th></tr>
+            </thead>
+            <tbody>
+            {% for b in budgets_list %}
+                <tr data-budget-id="{{ b.id }}" style="border-bottom:1px solid #f0f0f0;">
+                    <td>{{ b.category }}</td>
+                    <td>${{ "%.2f"|format(b.limit) }}</td>
+                    <td><button class="delete-budget-btn" data-id="{{ b.id }}">Delete</button></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+        <script>
+        document.addEventListener('click', function(e){
+            if (e.target && e.target.classList.contains('delete-budget-btn')){
+                const id = e.target.dataset.id;
+                if (!confirm('Delete this budget?')) return;
+                fetch('/delete-budget/' + id, { method: 'POST' })
+                    .then(res => {
+                        if (res.ok) location.reload();
+                        else alert('Failed to delete budget');
+                    }).catch(()=> alert('Failed to delete budget'));
+            }
+        });
+        </script>
+
+        {% endif %}
+
+    {% else %}
+        <p>No budgets created yet.</p>
+    {% endif %}
+</div>

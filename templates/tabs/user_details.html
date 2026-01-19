@@ -1,0 +1,165 @@
+<div class="card">
+    <h2>User Details</h2>
+</div>
+
+<div class="card">
+    <form id="userDetailsForm" method="POST" action="{{ url_for('user_details') }}">
+        <label>Location</label>
+        <input name="location" value="{{ details.location if details else '' }}" placeholder="City, State">
+
+        <label>Willingness to move radius</label>
+        <select name="radius">
+            <option value="10" {% if details and details.radius == 10 %}selected{% endif %}>10 miles</option>
+            <option value="20" {% if details and details.radius == 20 %}selected{% endif %}>20 miles</option>
+            <option value="50" {% if details and details.radius == 50 %}selected{% endif %}>50 miles</option>
+            <option value="100" {% if details and details.radius == 100 %}selected{% endif %}>100 miles</option>
+        </select>
+
+        <label>Insurance Type</label>
+        <select name="insurance_type">
+            <option value="" {% if not details or not details.insurance_type %}selected{% endif %}>Select...</option>
+            <option value="Employer-Sponsored" {% if details and details.insurance_type == 'Employer-Sponsored' %}selected{% endif %}>Employer-Sponsored Plan</option>
+            <option value="HSA/FSA" {% if details and details.insurance_type == 'HSA/FSA' %}selected{% endif %}>HSA / FSA</option>
+            <option value="Private Exchange" {% if details and details.insurance_type == 'Private Exchange' %}selected{% endif %}>Private Exchange Plan</option>
+        </select>
+
+        <h3>Family Members</h3>
+        <div id="familyList">
+            {% if details and details.family_members %}
+                {% for fm in details.family_members %}
+                <div class="family-row">
+                    <input class="fm-name" placeholder="Name" value="{{ fm.name }}">
+                    <input class="fm-age" type="number" placeholder="Age" value="{{ fm.age }}">
+                    <input class="fm-relation" placeholder="Relation" value="{{ fm.relation }}">
+                    <button class="remove-fm" type="button">Remove</button>
+                </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+        <button id="addFamilyBtn" type="button">Add Family Member</button>
+
+        <h3>Pets</h3>
+        <div id="petList">
+            {% if details and details.pets %}
+                {% for pet in details.pets %}
+                <div class="pet-row">
+                    <input class="pet-type" placeholder="Type (e.g., Dog)" value="{{ pet.type }}">
+                    <input class="pet-count" type="number" placeholder="Count" value="{{ pet.count }}">
+                    <input class="pet-ages" placeholder="Ages (comma separated)" value="{{ pet.ages|join(',') if pet.ages else '' }}">
+                    <button class="remove-pet" type="button">Remove</button>
+                </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+        <button id="addPetBtn" type="button">Add Pet</button>
+
+        <input type="hidden" name="family_members" id="family_members_input">
+        <input type="hidden" name="pets" id="pets_input">
+
+        <div style="margin-top:12px">
+            {% if details %}
+                <button id="editBtn" type="button">Edit</button>
+                <button id="saveBtn" type="submit" disabled>Save</button>
+            {% else %}
+                <button id="saveBtn" type="submit">Save</button>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<script>
+function createFamilyRow(name='', age='', relation=''){
+    const div = document.createElement('div');
+    div.className = 'family-row';
+    div.innerHTML = `
+        <input class="fm-name" placeholder="Name" value="${name}">
+        <input class="fm-age" type="number" placeholder="Age" value="${age}">
+        <input class="fm-relation" placeholder="Relation" value="${relation}">
+        <button class="remove-fm" type="button">Remove</button>
+    `;
+    return div;
+}
+function createPetRow(type='', count='', ages=''){
+    const div = document.createElement('div');
+    div.className = 'pet-row';
+    div.innerHTML = `
+        <input class="pet-type" placeholder="Type (e.g., Dog)" value="${type}">
+        <input class="pet-count" type="number" placeholder="Count" value="${count}">
+        <input class="pet-ages" placeholder="Ages (comma separated)" value="${ages}">
+        <button class="remove-pet" type="button">Remove</button>
+    `;
+    return div;
+}
+
+document.getElementById('addFamilyBtn').addEventListener('click', function(){
+    document.getElementById('familyList').appendChild(createFamilyRow());
+});
+
+document.getElementById('addPetBtn').addEventListener('click', function(){
+    document.getElementById('petList').appendChild(createPetRow());
+});
+
+document.addEventListener('click', function(e){
+    if(e.target && e.target.classList.contains('remove-fm')){
+        e.target.closest('.family-row').remove();
+    }
+    if(e.target && e.target.classList.contains('remove-pet')){
+        e.target.closest('.pet-row').remove();
+    }
+});
+
+// on submit, serialize rows into hidden inputs
+document.getElementById('userDetailsForm').addEventListener('submit', function(e){
+    const family = [];
+    document.querySelectorAll('#familyList .family-row').forEach(r => {
+        const name = r.querySelector('.fm-name').value.trim();
+        const age = r.querySelector('.fm-age').value;
+        const relation = r.querySelector('.fm-relation').value.trim();
+        if(name || age || relation){ family.push({name:name, age: age?Number(age):null, relation: relation}); }
+    });
+    const pets = [];
+    document.querySelectorAll('#petList .pet-row').forEach(r => {
+        const type = r.querySelector('.pet-type').value.trim();
+        const count = r.querySelector('.pet-count').value;
+        const ages = r.querySelector('.pet-ages').value.split(',').map(s=>s.trim()).filter(s=>s);
+        if(type){ pets.push({type:type, count: count?Number(count):0, ages: ages}); }
+    });
+    document.getElementById('family_members_input').value = JSON.stringify(family);
+    document.getElementById('pets_input').value = JSON.stringify(pets);
+});
+
+// Edit mode toggle: if details exist, start in view mode (inputs disabled)
+document.addEventListener('DOMContentLoaded', function(){
+    const hasDetails = {{ 'true' if details else 'false' }};
+    function setEditable(editable){
+        // inputs/selects
+        document.querySelectorAll('#userDetailsForm input, #userDetailsForm select, #userDetailsForm button.remove-fm, #userDetailsForm button.remove-pet').forEach(el=>{
+            // don't disable the edit button itself
+            if(el.id === 'editBtn') return;
+            if(el.id === 'saveBtn') return;
+            if(el.tagName.toLowerCase() === 'button'){
+                // enable/disable add/remove buttons
+                if(el.classList.contains('remove-fm') || el.classList.contains('remove-pet') || el.id==='addFamilyBtn' || el.id==='addPetBtn'){
+                    el.disabled = !editable;
+                }
+                return;
+            }
+            el.disabled = !editable;
+        });
+        const saveBtn = document.getElementById('saveBtn');
+        if(saveBtn) saveBtn.disabled = !editable;
+    }
+
+    if(hasDetails){
+        setEditable(false);
+        const editBtn = document.getElementById('editBtn');
+        if(editBtn){
+            editBtn.addEventListener('click', function(){
+                // toggle to edit
+                setEditable(true);
+                editBtn.style.display = 'none';
+            });
+        }
+    }
+});
+</script>

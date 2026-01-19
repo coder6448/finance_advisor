@@ -1,0 +1,115 @@
+<div class="forms-container">
+    <div class="card form-card">
+        <h2>Add Expense</h2>
+        <form method="POST">
+            <label>Category</label>
+            <select name="expense_category" required>
+                {% for cat in expense_categories %}
+                <option value="{{ cat.name }}">{{ cat.name }}</option>
+                {% endfor %}
+            </select>
+
+            <label>Amount</label>
+            <input type="number" step="0.01" name="expense_amount" required>
+            <button type="submit">Add Expense</button>
+        </form>
+    </div>
+
+    <div class="card form-card">
+        <h2>Add Income</h2>
+        <form method="POST">
+            <label>Category</label>
+            <select name="income_category" required>
+                {% for cat in income_categories %}
+                <option value="{{ cat.name }}">{{ cat.name }}</option>
+                {% endfor %}
+            </select>
+
+            <label>Amount</label>
+            <input type="number" step="0.01" name="income_amount" required>
+            <button type="submit">Add Income</button>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <h2>Manage Categories</h2>
+    <form method="POST" action="{{ url_for('add_category') }}" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <input name="category_name" placeholder="Category name" required style="flex:1;min-width:180px;">
+        <select name="category_type" required>
+            <option value="expense">Expense</option>
+            <option value="income">Income</option>
+        </select>
+        <label style="display:flex;align-items:center;gap:6px"><input type="checkbox" name="is_need">Is need</label>
+        <button type="submit">Add</button>
+    </form>
+
+    <div style="margin-top:8px;">
+        <h4>Expense Categories</h4>
+        <ul>
+        {% for c in expense_categories %}
+            <li>{{ c.name }} <button class="delete-category-btn" data-id="{{ c.id }}">Delete</button></li>
+        {% endfor %}
+        </ul>
+
+        <h4 style="margin-top:10px;">Income Categories</h4>
+        <ul>
+        {% for c in income_categories %}
+            <li>{{ c.name }} <button class="delete-category-btn" data-id="{{ c.id }}">Delete</button></li>
+        {% endfor %}
+        </ul>
+    </div>
+
+    <script>
+    document.addEventListener('click', function(e){
+        if (e.target && e.target.classList.contains('delete-category-btn')){
+            const id = e.target.dataset.id;
+            if (!confirm('Delete this category and ALL associated expenses, incomes, and budgets? This action cannot be undone.')) return;
+            fetch('/delete-category/' + id, { method: 'POST' })
+                .then(res => { if (res.ok) location.reload(); else alert('Failed to delete'); })
+                .catch(()=> alert('Failed to delete'));
+        }
+    });
+    </script>
+</div>
+
+<div class="charts-container">
+    <div class="card chart-card">
+        <h2>Expenses by Category</h2>
+        <canvas id="expenseChart"></canvas>
+    </div>
+
+    <div class="card chart-card">
+        <h2>Income by Category</h2>
+        <canvas id="incomeChart"></canvas>
+    </div>
+</div>
+
+<script>
+// Only render charts if the data variables are present to avoid template errors
+{% if expense_totals %}
+new Chart(document.getElementById("expenseChart"), {
+    type: "pie",
+    data: {
+        labels: {{ expense_totals.keys() | list | tojson }},
+        datasets: [{
+            data: {{ expense_totals.values() | list | tojson }},
+            backgroundColor: {{ chartExpenseColors | tojson }}
+        }]
+    }
+});
+{% endif %}
+
+{% if income_totals %}
+new Chart(document.getElementById("incomeChart"), {
+    type: "pie",
+    data: {
+        labels: {{ income_totals.keys() | list | tojson }},
+        datasets: [{
+            data: {{ income_totals.values() | list | tojson }},
+            backgroundColor: {{ chartIncomeColors | tojson }}
+        }]
+    }
+});
+{% endif %}
+</script>

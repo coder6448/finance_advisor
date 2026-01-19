@@ -1,0 +1,15 @@
+<div class="card">
+    <h2>AI Savings Advisor</h2>
+
+    <div>
+        <button id="aiAnalyzeBtn" type="button">Analyze housing & budgets</button>
+    </div>
+
+    <div id="aiResults" style="margin-top:12px; white-space:pre-wrap; font-family:monospace;">
+        {% if advice %}
+            <pre>{{ advice }}</pre>
+        {% endif %}
+    </div>
+
+    <div id="aiActions" style="margin-top:10px;"></div>
+</div>
