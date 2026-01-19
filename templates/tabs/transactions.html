@@ -1,37 +1,51 @@
-<div class="two-column">
-    <div class="card">
-        <h2>Expenses</h2>
-        <ul>
+<div class="forms-container">
+
+    <!-- EXPENSES -->
+    <div class="card transaction-card">
+        <div class="card-header">
+            <h2>Expenses</h2>
+            <button class="expand-btn" onclick="toggleExpand(this)">⤢</button>
+        </div>
+
+        <div class="transaction-list">
             {% for e in expenses %}
-            <li>
-                {{ e.date.strftime("%Y-%m-%d") }} —
-                {{ e.category }} —
-                ${{ "%.2f"|format(e.amount) }}
-                <form method="POST"
-                      action="{{ url_for('delete_transaction', id=e.id, txn_type='expense') }}"
-                      style="display:inline;">
-                    <button>Delete</button>
-                </form>
-            </li>
+            <div class="transaction-row">
+                <span class="date">{{ e.date.strftime("%Y-%m-%d") }}</span>
+                <span class="category">{{ e.category }}</span>
+                <span class="amount negative">-${{ "%.2f"|format(e.amount) }}</span>
+                <a href="{{ url_for('delete_transaction', id=e.id, txn_type='expense') }}" class="delete-btn">✕</a>
+            </div>
+            {% else %}
+            <p class="empty-text">No expenses yet</p>
             {% endfor %}
-        </ul>
+        </div>
     </div>
 
-    <div class="card">
-        <h2>Income</h2>
-        <ul>
-            {% for i in incomes %}
-            <li>
-                {{ i.date.strftime("%Y-%m-%d") }} —
-                {{ i.category }} —
-                ${{ "%.2f"|format(i.amount) }}
-                <form method="POST"
-                      action="{{ url_for('delete_transaction', id=i.id, txn_type='income') }}"
-                      style="display:inline;">
-                    <button>Delete</button>
-                </form>
-            </li>
+    <!-- INCOME -->
+    <div class="card transaction-card">
+        <div class="card-header">
+            <h2>Income</h2>
+            <button class="expand-btn" onclick="toggleExpand(this)">⤢</button>
+        </div>
+
+        <div class="transaction-list">
+            {% for i in income %}
+            <div class="transaction-row">
+                <span class="date">{{ i.date.strftime("%Y-%m-%d") }}</span>
+                <span class="category">{{ i.category }}</span>
+                <span class="amount positive">${{ "%.2f"|format(i.amount) }}</span>
+                <a href="{{ url_for('delete_transaction', id=i.id, txn_type='income') }}" class="delete-btn">✕</a>
+            </div>
+            {% else %}
+            <p class="empty-text">No income yet</p>
             {% endfor %}
-        </ul>
+        </div>
     </div>
+
 </div>
+
+<script>
+function toggleExpand(btn) {
+    btn.closest(".transaction-card").classList.toggle("expanded");
+}
+</script>
